@@ -29,9 +29,9 @@ void q_free(struct list_head *l)
     while (l) {
         cur = l;
         l = l->next;
-        elememt_t *node = container_of(cur, element_t, list);
+        element_t *node = container_of(cur, element_t, list);
         free(node->value);
-        free(cur);
+        free(node);
     }
 }
 
