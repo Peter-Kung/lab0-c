@@ -167,44 +167,41 @@ bool q_delete_dup(struct list_head *head)
 void q_swap(struct list_head *head)
 {
     // https://leetcode.com/problems/swap-nodes-in-pairs/
+    void swap(struct list_head **);
 
-    void swap(struct list_head *, struct list_head *);
-    struct list_head *cur = head->next;
+    if (list_empty(head))
+        return;
 
     head->prev->next = NULL;
+    swap(&(head->next));
 
-    int k = 1;
-    while (cur) {
-        struct list_head *tmp = cur->next;
-        if (k == 0) {
-            k = 1;
-            swap(cur->prev, cur);
-        } else
-            k--;
-
-        cur = tmp;
+    struct list_head *last = NULL;
+    last = head->next;
+    while (last->next) {
+        last->next->prev = last;
+        last = last->next;
     }
-
-    struct list_head *fptr = head->next;
-    while (fptr->prev != head)
-        fptr = fptr->prev;
-    head->next = fptr;
-
-    fptr = head->prev;
-    while (fptr->next != head)
-        fptr = fptr->next;
-    head->prev = fptr;
+    last->next = head;
+    head->prev = last;
 }
 
-void swap(struct list_head *a, struct list_head *b)
+void swap(struct list_head **head)
 {
-    struct list_head *a_prev = a->prev;
-    struct list_head *b_next = a->next;
+    if (!*head || !(*head)->next)
+        return;
+    struct list_head *next = (*head)->next;
 
-    b->next = a;
-    b->prev = a_prev;
-    a->next = b_next;
-    a->prev = b;
+    /* A -> B -> C*/
+    (*head)->next = next->next;
+    /*
+     * A -> C
+     * B -> C
+     */
+    next->next = (*head);
+    /* B -> A -> C */
+
+    (*head) = next;
+    swap(&(*head)->next->next);
 }
 
 /* Reverse elements in queue */
@@ -235,21 +232,27 @@ struct list_head *list_reverse(struct list_head *cur)
 /* Sort elements of queue in ascending order */
 void q_sort(struct list_head *head)
 {
-    /*
-        struct list_head *sort(struct list_head *);
-        if (list_empty(head))
-            return ;
-        head->prev->next = NULL;
-        head->next = sort(head->next);
-        head->prev->next = head;
-    */
+    struct list_head *sort(struct list_head *);
+    if (list_empty(head))
+        return;
+    head->prev->next = NULL;
+    head->next = sort(head->next);
+
+
+    struct list_head *tmp = head->next;
+    while (tmp->next) {
+        tmp->next->prev = tmp;
+        tmp = tmp->next;
+    }
+    head->prev = tmp;
+    tmp->next = head;
 }
 
 #include <stdint.h>
 struct list_head *sort(struct list_head *head)
 {
-    if (list_empty(head))
-        return NULL;
+    if (!head || !head->next)
+        return head;
 
     struct list_head *tur = head;
     struct list_head *rab = tur->next;
@@ -266,11 +269,11 @@ struct list_head *sort(struct list_head *head)
     tur = sort(tur);
     rab = sort(rab);
 
-    struct list_head **cur, **node;
+    struct list_head **cur, **node = NULL;
     for (cur = &head; rab && tur;) {
         element_t *r_ele = container_of(rab, element_t, list);
         element_t *t_ele = container_of(tur, element_t, list);
-        node = (strcmp(r_ele->value, t_ele->value) > 0) ? &rab : &tur;
+        node = (strcmp(r_ele->value, t_ele->value) < 0) ? &rab : &tur;
         *cur = *node;
         cur = &(*cur)->next;
         (*node) = (*node)->next;
