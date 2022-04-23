@@ -121,11 +121,14 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
     if (!sp)
         return ele;
 
-    memset(sp, 0, bufsize);
 
     int len = strlen(ele->value);
     if (bufsize > len)
         bufsize = len;
+    else
+        bufsize = bufsize - 1;
+
+    memset(sp, 0, bufsize + 1);
     strncpy(sp, ele->value, bufsize);
 
     return ele;
@@ -283,18 +286,45 @@ void swap(struct list_head **head)
 /* Reverse elements in queue */
 void q_reverse(struct list_head *head)
 {
-    if (!head)
+    if (!head || list_empty(head) || head->next == head->prev)
         return;
-    struct list_head *curHead = head->next;
-    struct list_head *curTail = head->prev;
-    struct list_head *list_reverse(struct list_head *);
-    curTail->next = NULL;
-    list_reverse(curHead);
+    /*
+        struct list_head *curHead = head->next;
+        struct list_head *curTail = head->prev;
+        struct list_head *list_reverse(struct list_head *);
+        curTail->next = NULL;
+        list_reverse(curHead);
 
-    head->next = curTail;
-    head->prev = curHead;
-    curTail->prev = head;
-    curHead->next = head;
+        head->next = curTail;
+        head->prev = curHead;
+        curTail->prev = head;
+        curHead->next = head;
+    */
+
+    struct list_head *tail = head->prev;
+    struct list_head *tmp = head->next;
+    struct list_head *prev = head;
+    if (!tmp)
+        return;
+
+    struct list_head *next = tmp->next;
+    tail->next = NULL;
+
+    while (tmp) {
+        tmp->next = prev;
+        tmp->prev = next;
+        /* Renew node pointer */
+        prev = tmp;
+        tmp = next;
+        if (!next)
+            break;
+        next = next->next;
+    }
+
+    head->prev = head->next;
+    head->next->prev = head;
+    head->next = tail;
+    tail->prev = head;
 }
 
 struct list_head *list_reverse(struct list_head *cur)
